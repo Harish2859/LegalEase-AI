@@ -1,0 +1,35 @@
+# Environment variables — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+
+# Prisma generated client (regenerated via npx prisma generate)
+backend/node_modules/
+
+# Uploaded/sample documents — may contain sensitive legal content
+backend/samples/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Python (RAGAS evaluation scripts)
+__pycache__/
+*.pyc
+.venv/

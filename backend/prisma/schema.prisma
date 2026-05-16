@@ -1,0 +1,38 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  userId     String
+  filename   String
+  sha256Hash String   @unique
+  pageCount  Int
+  status     String
+  createdAt  DateTime @default(now())
+  chunks     Chunk[]
+}
+
+model Chunk {
+  id              String                      @id @default(uuid())
+  documentId      String
+  document        Document                    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  content         String                      @db.Text
+  embedding       Unsupported("vector(1024)")?
+  chunkType       String
+  sectionTitle    String?
+  clauseType      String?
+  parentChunkId   String?
+  parentChunk     Chunk?                      @relation("ParentChild", fields: [parentChunkId], references: [id])
+  childChunks     Chunk[]                     @relation("ParentChild")
+  pageStart       Int?
+  charOffsetStart Int?
+  createdAt       DateTime                    @default(now())
+}

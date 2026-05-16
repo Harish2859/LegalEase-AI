@@ -1,0 +1,22 @@
+{
+  "red_flags": [
+    {
+      "id": "auto_renewal",
+      "label": "Auto-Renewal Clause",
+      "keywords": ["automatically renew", "auto-renew", "evergreen"],
+      "severity": "medium"
+    },
+    {
+      "id": "non_compete",
+      "label": "Non-Compete Clause",
+      "keywords": ["non-compete", "not compete", "competitive activity"],
+      "severity": "high"
+    },
+    {
+      "id": "liability_cap",
+      "label": "Liability Cap",
+      "keywords": ["limitation of liability", "aggregate liability", "in no event"],
+      "severity": "high"
+    }
+  ]
+}

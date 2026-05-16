@@ -1,0 +1,11 @@
+import { CohereClient } from "cohere-ai";
+
+export const generateEmbedding = async (text: string): Promise<number[]> => {
+  const cohere = new CohereClient({ token: process.env.COHERE_API_KEY });
+  const response = await cohere.embed({
+    texts: [text],
+    model: "embed-english-v3.0",
+    inputType: "search_document",
+  });
+  return (response.embeddings as number[][])[0];
+};

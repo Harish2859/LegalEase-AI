@@ -1,0 +1,22 @@
+{
+  "name": "legalease-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "ts-node-dev src/server.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0",
+    "cohere-ai": "^8.0.0",
+    "fastify": "^4.0.0",
+    "groq-sdk": "^1.2.0",
+    "llama-parse": "^0.1.0",
+    "openai": "^6.38.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "prisma": "5.22.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.0.0"
+  }
+}
