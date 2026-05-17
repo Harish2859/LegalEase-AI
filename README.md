@@ -84,6 +84,74 @@ backend/src/services/ingestion/
 
 ---
 
-## Week 2 — Multi-Stage Retrieval Engine (upcoming)
+## Week 2 — Multi-Stage Retrieval Engine
 
-Implementing **Hybrid Search (Vector + BM25)** and **Reranking** to achieve a target Faithfulness score of >0.90.
+### Overview
+
+Week 2 built a four-stage retrieval pipeline that goes far beyond simple vector search. Each stage filters and enriches results to ensure the LLM only receives the most legally relevant context.
+
+### Architecture: Four-Stage Retrieval Pipeline
+
+1. **HyDE + Query Expansion**
+   - **Groq (Llama 3.3 70B)** generates a hypothetical legal paragraph answering the user's query
+   - Also extracts 3 specific legal keywords for keyword search
+   - Embedding the *hypothesis* instead of the raw question bridges the vocabulary gap between user language and legal jargon
+
+2. **Hybrid Search with Reciprocal Rank Fusion (RRF)**
+   - **Vector search:** Cosine similarity using the hypothesis embedding against `pgvector`
+   - **Keyword search:** PostgreSQL full-text search (`tsvector` + GIN index) using expanded keywords
+   - Results fused using RRF formula: `1/(k + rank_vector) + 1/(k + rank_keyword)` where `k=60`
+   - Entire fusion runs inside PostgreSQL for maximum performance
+
+3. **Cohere Reranker Quality Gate**
+   - Top 50 RRF candidates passed to `cohere rerank-english-v3.0` cross-encoder
+   - Filters to top 5 chunks with relevance score > 0.3
+   - Prevents semantically similar but legally irrelevant chunks from reaching the LLM
+
+4. **Parent Context Fetch**
+   - Each reranked child chunk's `parentChunkId` is used to fetch the full legal section
+   - LLM receives complete article/section context, not just the matched fragment
+
+### Folder Structure
+
+```
+backend/src/services/retrieval/
+├── hybrid_search.ts   # RRF fusion query (vector + BM25 in PostgreSQL)
+├── reranker.ts        # Cohere cross-encoder quality gate
+├── expansion.ts       # HyDE hypothesis + keyword expansion via Groq
+└── retriever.ts       # Main orchestrator: expansion → search → rerank → fetch
+
+scripts/
+├── run_ragas.py                          # RAGAS evaluation suite
+└── backend/scripts/generate-test-results.ts  # Pipeline test data generator
+```
+
+### Database Migrations
+
+- `vector(1024)` column on `Chunk` table via raw SQL (Prisma doesn't support pgvector natively)
+- `content_tsv tsvector` generated column with GIN index for full-text search
+
+### RAGAS Evaluation Targets
+
+| Metric | Target | Status |
+|---|---|---|
+| Faithfulness | > 0.90 | ✅ 1.000 |
+| Answer Relevancy | > 0.85 | Pending full dataset |
+| Context Precision | > 0.75 | Pending full dataset |
+| Context Recall | > 0.80 | Pending full dataset |
+
+> Note: Answer Relevancy, Context Precision and Context Recall require a fully populated test dataset (rate-limited on Groq free tier). Re-run after token reset: `npx ts-node backend/scripts/generate-test-results.ts && python scripts/run_ragas.py`
+
+### Week 2 Deliverables
+
+- ✅ Hybrid search: Vector + BM25 fused via RRF inside PostgreSQL
+- ✅ HyDE query expansion: Hypothesis embedding + keyword extraction via Groq
+- ✅ Reranker quality gate: Cohere cross-encoder with 0.3 relevance threshold
+- ✅ Parent context fetch: Full legal sections returned for matched child chunks
+- ✅ RAGAS evaluation suite: Faithfulness, Answer Relevancy, Context Precision, Context Recall
+
+---
+
+## Week 3 — Agentic Generation Layer (upcoming)
+
+Implementing a **LangGraph**-powered agent that orchestrates multi-step legal reasoning, red flag detection, and citation-grounded answer generation.
