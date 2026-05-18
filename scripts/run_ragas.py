@@ -21,7 +21,10 @@ def run_eval():
     with open(RESULTS_PATH, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    dataset = Dataset.from_dict(data)
+    # Limit to first 5 rows to stay within Groq free tier token budget
+    # Re-run with full dataset after upgrading to Dev Tier
+    limited_data = {k: v[:5] for k, v in data.items()}
+    dataset = Dataset.from_dict(limited_data)
 
     llm = LangchainLLMWrapper(ChatGroq(model="llama-3.3-70b-versatile", api_key=GROQ_API_KEY, n=1))
     embeddings = LangchainEmbeddingsWrapper(CohereEmbeddings(cohere_api_key=COHERE_API_KEY, model="embed-english-v3.0"))

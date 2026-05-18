@@ -152,6 +152,75 @@ scripts/
 
 ---
 
-## Week 3 — Agentic Generation Layer (upcoming)
+## Week 3 — Agentic Generation Layer
 
-Implementing a **LangGraph**-powered agent that orchestrates multi-step legal reasoning, red flag detection, and citation-grounded answer generation.
+### Overview
+
+Week 3 transformed the linear pipeline into a **stateful, self-correcting LangGraph agent**. Instead of blindly passing context to an LLM, the system now evaluates its own retrieved data, rewrites failed queries, and generates citation-grounded answers.
+
+### Architecture: LangGraph State Machine
+
+```
+START → analyze → retrieve → gradeContext()
+                               ├── "generate" → answerGenerator → END
+                               └── "rewrite"  → queryRewriter → retrieve (max 2 retries)
+```
+
+1. **Query Analyzer**
+   - Classifies intent as `GENERAL_QA`, `RED_FLAG_SCAN`, or `SUMMARY`
+   - Extracts legal categories mentioned (Termination, IP, Liability, etc.)
+
+2. **Retriever Node**
+   - Wraps the full Week 2 pipeline: HyDE → Hybrid Search → Rerank → Parent Fetch
+
+3. **Context Grader (Router)**
+   - Evaluates whether retrieved chunks are sufficient to answer the query
+   - Routes to `generate` if relevant, or `rewrite` if not (up to 2 retries)
+
+4. **Query Rewriter**
+   - Analyzes why the search failed and generates a better query using legal synonyms and jargon
+   - Increments `retryCount` to prevent infinite loops
+
+5. **Answer Generator**
+   - Strict legal analyst persona — answers using ONLY retrieved context
+   - Every claim cited with `[Source: Section Name, Page X]` format
+   - Returns `"I don't know"` if context is insufficient rather than hallucinating
+
+### API Endpoint
+
+```
+POST /analyze
+Body: { "query": "string", "documentId": "string" }
+Response: { "answer": "string", "sources": [...], "retryCount": number }
+```
+
+### Folder Structure
+
+```
+backend/src/agents/
+├── state.ts           # LangGraph shared state (query, chunks, answer, retryCount, redFlags)
+├── graph.ts           # Compiled StateGraph workflow
+├── analyzer.ts        # re-export
+├── retriever.ts       # re-export
+├── grader.ts          # re-export
+└── nodes/
+    ├── analyzer.ts    # Intent classification via Groq
+    ├── retriever.ts   # Week 2 retrieve() wrapper
+    ├── grader.ts      # Context relevance router
+    ├── rewriter.ts    # Query reformulation on retrieval failure
+    └── generator.ts   # Cited answer generation
+```
+
+### Week 3 Deliverables
+
+- ✅ LangGraph stateful agent with shared state across all nodes
+- ✅ Intent-aware query analyzer: GENERAL_QA / RED_FLAG_SCAN / SUMMARY
+- ✅ Self-correcting retry loop: rewrite → retrieve → grade (max 2 retries)
+- ✅ Citation-grounded answer generation with strict hallucination prevention
+- ✅ POST /analyze API endpoint verified end-to-end
+
+---
+
+## Week 4 — Frontend & Production Hardening (upcoming)
+
+Building the React frontend with PDF viewer, chat interface, and red flag highlighting.

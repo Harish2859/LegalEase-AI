@@ -10,7 +10,7 @@ export const classifyClause = async (text: string): Promise<string> => {
       },
       { role: "user", content: text.substring(0, 500) },
     ],
-    model: "llama-3.3-70b-versatile",
+    model: "llama-3.1-8b-instant",
   });
   return completion.choices[0]?.message?.content || "Other";
 };
