@@ -18,6 +18,20 @@ model Document {
   status     String
   createdAt  DateTime @default(now())
   chunks     Chunk[]
+  redFlags   RedFlag[]
+}
+
+model RedFlag {
+  id             String   @id @default(uuid())
+  documentId     String
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  flagType       String
+  severity       String
+  explanation    String   @db.Text
+  recommendation String   @db.Text
+  sectionTitle   String?
+  pageStart      Int?
+  createdAt      DateTime @default(now())
 }
 
 model Chunk {

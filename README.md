@@ -221,6 +221,130 @@ backend/src/agents/
 
 ---
 
-## Week 4 — Frontend & Production Hardening (upcoming)
+## Week 4 — Frontend & Production Hardening
 
-Building the React frontend with PDF viewer, chat interface, and red flag highlighting.
+### Overview
+
+Week 4 wired the full stack into a production-grade React UI and hardened the backend against real-world usage. The result is a three-panel application where users upload a contract, interrogate it via chat, and immediately see a proactive risk report — all backed by the pipelines from Weeks 1–3.
+
+### Architecture: Three-Panel UI
+
+```
+┌─────────────┬──────────────────────────┐
+│  Sidebar    │  Tab: Chat | Red Flags   │
+│  - Upload   │                          │
+│  - Delete   │  ChatInterface           │
+│             │  or                      │
+│             │  RedFlagReport           │
+└─────────────┴──────────────────────────┘
+```
+
+1. **Upload Sidebar**
+   - PDF file input triggers `POST /upload` → ingestion pipeline
+   - Displays active filename with a delete (Right-to-Erasure) button
+
+2. **Chat Interface** (`src/components/ChatInterface.jsx`)
+   - User/assistant message bubbles with `whitespace-pre-wrap` for structured answers
+   - Source citation buttons per message — each calls `onCiteClick(source)` for future PDF scroll integration
+   - Enter-to-send, loading state, and error handling
+   - Calls `POST /analyze` → LangGraph agent (Week 3)
+
+3. **Red Flag Dashboard** (`src/components/RedFlagReport.jsx`)
+   - "Run Scan" button triggers `POST /documents/:id/red-flags/scan`
+   - Scan reads `Chunk.clauseType` labels written by the Week 1 classifier, derives severity, persists to `RedFlag` table, and returns results
+   - Cards colour-coded by severity: critical (red) / high (orange) / medium (yellow)
+   - Each card shows: flag type, explanation excerpt, recommendation, section title, and page number
+
+### Production Hardening
+
+1. **Rate Limiting**
+   - `@fastify/rate-limit` applied globally: 20 requests per minute
+   - Prevents runaway Groq / Cohere API costs from a single client
+
+2. **CORS**
+   - `@fastify/cors` locked to `http://localhost:5173` (Vite dev server)
+   - Blocks cross-origin requests from unknown origins
+
+3. **Right-to-Erasure**
+   - `DELETE /documents/:id` deletes the `Document` row
+   - `onDelete: Cascade` on both `Chunk` and `RedFlag` models ensures all derived data is removed automatically
+
+4. **RedFlag Table**
+   - New `RedFlag` Prisma model with cascade delete, applied via `prisma migrate deploy`
+   - Stores: `flagType`, `severity`, `explanation`, `recommendation`, `sectionTitle`, `pageStart`
+
+### API Endpoints Added
+
+```
+GET    /documents/:id/red-flags        # Fetch stored flags for a document
+POST   /documents/:id/red-flags/scan   # Re-scan: derive from classifier chunks, persist, return
+DELETE /documents/:id                  # Right-to-Erasure: removes document + all chunks + flags
+```
+
+### Folder Structure
+
+```
+frontend/src/
+├── api/
+│   └── client.js          # analyzeContract, getRedFlags, scanRedFlags, deleteDocument
+├── components/
+│   ├── ChatInterface.jsx   # Chat UI with citation buttons
+│   └── RedFlagReport.jsx   # Risk dashboard with severity cards
+└── App.jsx                 # 3-panel layout: sidebar + tab bar + active panel
+
+backend/src/
+├── routes/
+│   └── red_flags.ts        # GET fetch, POST scan, DELETE erasure
+├── server.ts               # CORS + rate-limit + redFlagsRoute registered
+prisma/
+├── schema.prisma           # RedFlag model added
+└── migrations/
+    └── 20260518_add_red_flags/migration.sql
+```
+
+### Week 4 Deliverables
+
+- ✅ React UI: 3-panel layout with upload sidebar, chat tab, and red flag tab
+- ✅ Chat Interface: citation buttons, loading states, error handling, Enter-to-send
+- ✅ Red Flag Dashboard: severity-ranked cards derived from Week 1 classifier output
+- ✅ Scan endpoint: reads `Chunk.clauseType`, persists to `RedFlag` table, returns results
+- ✅ Rate limiting: `@fastify/rate-limit` — 20 req/min globally
+- ✅ CORS: locked to Vite dev origin
+- ✅ Right-to-Erasure: `DELETE /documents/:id` with cascade cleanup
+- ✅ Database migration: `RedFlag` table applied via `prisma migrate deploy`
+
+---
+
+## Project Complete 🏆
+
+| Week | Focus                           | Status |
+|------|-------|-------------------------|
+| 1    | Document Ingestion Pipeline     | ✅ |
+| 2    | Multi-Stage Retrieval Engine    | ✅ |
+| 3    | Agentic Generation Layer        | ✅ |
+| 4    | Frontend & Production Hardening | ✅ |
+
+### Verification Checklist
+
+To confirm the full system is working end-to-end:
+
+```bash
+# 1. Start infrastructure
+docker-compose up -d
+
+# 2. Start backend
+cd backend && npm run dev
+
+# 3. Start frontend
+cd frontend && npm run dev
+```
+
+Then in the browser (`http://localhost:5173`):
+
+1. Upload a real contract PDF — watch the terminal for ingestion logs
+2. Switch to **Chat** tab → ask: *"What are the termination conditions?"*
+   - Verify the answer contains `[Source: ...]` citations
+3. Switch to **Red Flags** tab → click **Run Scan**
+   - Verify Auto-Renewal, Non-Compete, or Liability cards appear
+   - Each card should show severity, explanation excerpt, and recommendation
+4. Click the trash icon in the sidebar → confirm the document and all flags are deleted
