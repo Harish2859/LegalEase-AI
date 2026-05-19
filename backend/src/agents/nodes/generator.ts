@@ -7,7 +7,10 @@ export const answerGenerator = async (state: typeof LegalGraphState.State) => {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
   const context = state.retrievedChunks
-    .map((c: any) => `[Section: ${c.sectionTitle}, Page: ${c.pageStart}]\n${c.parentContent || c.content}`)
+    .map((c: any) => {
+      const page = c.pageStart != null ? `Page ${c.pageStart}` : 'page unknown';
+      return `[Section: ${c.sectionTitle ?? 'Unknown'}, ${page}]\n${c.parentContent || c.content}`;
+    })
     .join("\n\n---\n\n");
 
   const response = await groq.chat.completions.create({

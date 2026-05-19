@@ -10,22 +10,26 @@ function App() {
   const [docId, setDocId]       = useState(null);
   const [filename, setFilename] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'flags'
 
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setUploadError(null);
     try {
       const form = new FormData();
       form.append('file', file);
       const res  = await fetch(`${API}/upload`, { method: 'POST', body: form });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
       setDocId(data.documentId);
       setFilename(file.name);
       setActiveTab('chat');
     } catch (err) {
       console.error(err);
+      setUploadError(err.message);
     } finally {
       setUploading(false);
     }
@@ -51,6 +55,10 @@ function App() {
           {uploading ? 'Uploading…' : '+ Upload PDF'}
           <input type="file" accept=".pdf" className="hidden" onChange={handleUpload} />
         </label>
+
+        {uploadError && (
+          <p className="text-xs text-red-400 break-words">{uploadError}</p>
+        )}
 
         {filename && (
           <div className="flex items-start justify-between gap-1 bg-slate-800 rounded-lg p-2">
