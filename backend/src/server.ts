@@ -7,7 +7,11 @@ import redFlagsRoute from './routes/red_flags';
 
 const app = Fastify({ logger: true });
 
-app.register(cors, { origin: process.env.CORS_ORIGIN || 'http://localhost:5173' });
+app.register(cors, {
+  origin: ['http://localhost:5173', /\.vercel\.app$/],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+});
 app.register(rateLimit, { max: 20, timeWindow: '1 minute' });
 app.register(analyzeRoute);
 app.register(uploadRoute);
