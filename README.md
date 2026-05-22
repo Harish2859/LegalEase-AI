@@ -1,6 +1,15 @@
 # ⚖️ LegalEase AI
 
-## 🚀 Quick Start
+## 🌐 Live Demo
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://legal-ease-ai-flame.vercel.app/ |
+| Backend API | https://legalease-ai-qq4s.onrender.com |
+
+---
+
+## 🚀 Quick Start (Local Development)
 
 ### 1. Spin up infrastructure
 ```bash
@@ -30,6 +39,35 @@ LLAMA_CLOUD_API_KEY=        # cloud.llamaindex.ai
 GROQ_API_KEY=               # console.groq.com
 COHERE_API_KEY=             # dashboard.cohere.com
 ```
+
+---
+
+## 📦 Production Deployment
+
+### Backend — Render
+- **Platform:** Render Web Service
+- **Build command:** `cd backend && npm install && npx prisma migrate deploy && npm run build`
+- **Start command:** `npm start` → runs `node dist/src/server.js`
+- **Environment variables** (set in Render dashboard, never committed to git):
+  ```
+  DATABASE_URL
+  LLAMA_CLOUD_API_KEY
+  GROQ_API_KEY
+  COHERE_API_KEY
+  ```
+
+### Frontend — Vercel
+- **Platform:** Vercel
+- **Framework:** Vite + React
+- **Environment variables** (set in Vercel dashboard):
+  ```
+  VITE_API_BASE_URL=https://legalease-ai-qq4s.onrender.com
+  ```
+
+### Database — Render PostgreSQL
+- Hosted on Render (Oregon, US West)
+- `pgvector` extension enabled for 1024-dimensional embeddings
+- Schema applied via `npx prisma migrate deploy`
 
 ---
 
@@ -262,7 +300,7 @@ Week 4 wired the full stack into a production-grade React UI and hardened the ba
    - Prevents runaway Groq / Cohere API costs from a single client
 
 2. **CORS**
-   - `@fastify/cors` locked to `http://localhost:5173` (Vite dev server)
+   - `@fastify/cors` allows `http://localhost:5173` (dev) and all `*.vercel.app` domains (production)
    - Blocks cross-origin requests from unknown origins
 
 3. **Right-to-Erasure**
@@ -326,7 +364,9 @@ prisma/
 
 ### Verification Checklist
 
-To confirm the full system is working end-to-end:
+**Production** — visit https://legal-ease-ai-flame.vercel.app/ directly.
+
+**Local** — start the stack first:
 
 ```bash
 # 1. Start infrastructure
