@@ -4,7 +4,7 @@ import RedFlagReport from './components/RedFlagReport';
 import { deleteDocument } from './api/client';
 import { Scale, Trash2 } from 'lucide-react';
 
-const API = 'http://localhost:3001';
+const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 function App() {
   const [docId, setDocId]       = useState(null);
