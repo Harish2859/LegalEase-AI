@@ -388,3 +388,7 @@ Then in the browser (`http://localhost:5173`):
    - Verify Auto-Renewal, Non-Compete, or Liability cards appear
    - Each card should show severity, explanation excerpt, and recommendation
 4. Click the trash icon in the sidebar → confirm the document and all flags are deleted
+
+
+<img width="1536" height="1024" alt="ChatGPT Image May 24, 2026, 08_36_06 PM" src="https://github.com/user-attachments/assets/a3945544-315c-4b0d-a882-898965eb45f4" />
+
