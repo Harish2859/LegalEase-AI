@@ -24,6 +24,15 @@ npx prisma migrate dev
 npm run dev
 ```
 
+### 2b. Backend (Python FastAPI rewrite)
+```bash
+cd python_backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 3001 --reload
+```
+
 ### 3. Frontend
 ```bash
 cd frontend
@@ -391,4 +400,3 @@ Then in the browser (`http://localhost:5173`):
 
 
 <img width="1536" height="1024" alt="ChatGPT Image May 24, 2026, 08_36_06 PM" src="https://github.com/user-attachments/assets/a3945544-315c-4b0d-a882-898965eb45f4" />
-
